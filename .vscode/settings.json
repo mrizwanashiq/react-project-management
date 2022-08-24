@@ -1,0 +1,13 @@
+{
+	"editor.bracketPairColorization.enabled": true,
+	"editor.guides.bracketPairs": "active",
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.formatOnPaste": true,
+	"emmet.includeLanguages": {
+		"javascript": "javascriptreact"
+	},
+	"workbench.colorCustomizations": {
+		"terminal.background": "#0a0a0a",
+		"terminal.foreground": "#72ec86"
+	}
+}
