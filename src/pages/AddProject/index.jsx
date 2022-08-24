@@ -6,22 +6,18 @@ import {
 	InputWrapper,
 	TopHeaderWrapper,
 	TopHeaderLeftSide,
-	BodyWrapper
+	BodyWrapper,
+	Title
 } from "./styles"
 import TextArea from "antd/lib/input/TextArea"
-import { useSelector, useDispatch } from "react-redux"
-import { CreateProject, EditAProject, GetProjectMeta } from "redux/app/actions/projects"
 import NewProject from "assets/icons/NewProject"
-import { data, loading } from "redux/app"
 import { useParams, useLocation, useNavigate } from "react-router-dom"
 import ArrowLeft from "assets/icons/ArrowLeft"
 import Logout from "components/shared/Logout"
-import Column from "antd/lib/table/Column"
+import { generateId } from "services/CommonMethods"
 
 const AddProject = (props) => {
-	const dispatch = useDispatch()
-	const projectDetails = useSelector(data)
-	const dataLoading = useSelector(loading)
+	const [dataLoading, setLoading] = React.useState(false)
 	const [values, setValues] = useState({
 		name: "",
 		description: "",
@@ -34,24 +30,8 @@ const AddProject = (props) => {
 	const headingRef = useRef()
 
 	useEffect(() => {
-		if (id && !projectDetails[projectDetails.length -1]?.screen) {
-			dispatch(
-				GetProjectMeta(
-					id,
-					// selectProjectHeading
-				)
-			)
-
-			// setTimeout(() => {
-			// 	selectProjectHeading()
-			// 	navigate(`/project/${id}`, { state: {} })
-			// }, 1500)
-		}
-	}, [dispatch, id])
-
-	// const selectProjectHeading = () => {
-	// 	if (location?.state?.isNewProject) headingRef.current.select()
-	// }
+		GetProjectDetails(id)
+	}, [id])
 
 	const onFinish = () => {
 		if (!values.name) {
@@ -61,14 +41,66 @@ const AddProject = (props) => {
 			})
 			return
 		}
-		id ? dispatch(EditAProject(values, id, "Edit")) : dispatch(CreateProject(values, setValues))
+		editAProject(id, values)
 	}
 
-	useEffect(() => {
-		if (projectDetails) {
-			setValues(projectDetails)
+	function GetProjectDetails(id) {
+		setLoading(true)
+		const projects = JSON.parse(localStorage.getItem('projects'));
+		const project = projects.find(i => i.id === id);
+
+		if (project) {
+			setValues(project)
+		} else {
+			notification["error"]({
+				message: "Project Not Found, now it will ",
+				duration: 2,
+			})
 		}
-	}, [projectDetails])
+		setLoading(false)
+	}
+
+	const editAProject = (id, data) => {
+		if (id) {
+			const projects = JSON.parse(localStorage.getItem('projects'));
+			const project = projects.find(i => i.id === id);
+
+			if (!project) {
+				createProject(data)
+			} else {
+				setLoading(true);
+				const index = projects.findIndex(i => i.id === id);
+				projects[index] = { ...project, ...data }
+				localStorage.setItem('projects', JSON.stringify(projects))
+					notification["success"]({
+						message: "Project edited successfully",
+						duration: 2,
+					})
+				setLoading(false)
+			}
+		} else {
+			createProject(data)
+		}
+	}
+
+	const createProject = (data) => {
+		setLoading(true)
+		const projects = JSON.parse(localStorage.getItem('projects'));
+		const project = {
+			id: generateId(projects),
+			user_id: localStorage.getItem("token"),
+			last_modified_by: localStorage.getItem("token"),
+			status: 'active',
+			...values
+		}
+		projects.push(project);
+		localStorage.setItem('projects', JSON.stringify(projects))
+		notification["success"]({
+			message: "Project created successfully",
+			duration: 2,
+		})
+		navigate(`/project/${project.id}`, { state: { isNewProject: true } })
+	}
 
 	return (
 		<>
@@ -83,7 +115,7 @@ const AddProject = (props) => {
 							<AddProjectIcon>
 								<NewProject width={35} />
 							</AddProjectIcon>
-							
+							<Title>Add/Edit Project</Title>
 						</TopHeaderLeftSide>
 						<div>
 							<Logout />
@@ -93,42 +125,41 @@ const AddProject = (props) => {
 
 				<BodyWrapper>
 				<InputWrapper>
-								<Input
-									autoFocus={location.state?.isNewProject ? true : false}
-									placeholder="Project name"
-									className="project-heading"
-									ref={headingRef}
-									maxLength={128}
-									value={values.name}
-									showCount={false}
-									onChange={(e) => {
-										setValues({ ...values, name: e.target.value })
-									}}
-									onBlur={onFinish}
-								/>
+					<Input
+						autoFocus={location.state?.isNewProject ? true : false}
+						placeholder="Project name"
+						className="project-heading"
+						ref={headingRef}
+						maxLength={128}
+						value={values.name}
+						showCount={false}
+						onChange={(e) => {
+							setValues({ ...values, name: e.target.value })
+						}}
+						onBlur={onFinish}
+					/>
+					
+					<TextArea
+						cols={30}
+						value={values.description}
+						rows={4}
+						className="project-description"
+						placeholder="Project description"
+						maxLength={1024}
+						showCount={false}
+						onBlur={onFinish}
+						onChange={(e) => {
+							setValues({ ...values, description: e.target.value })
+						}}
+					/>
+				</InputWrapper>
 
-								<TextArea
-									cols={30}
-									value={values.description}
-									rows={2}
-									className="project-description"
-									placeholder="Project description"
-									maxLength={1024}
-									showCount={false}
-									onBlur={onFinish}
-									onChange={(e) => {
-										setValues({ ...values, description: e.target.value })
-									}}
-								/>
-							</InputWrapper>
-
-							{dataLoading && (
-								<Space size="medium">
-									<Spin size="medium" />
-								</Space>
-					)}
-					</BodyWrapper>
-				{/* </Column> */}
+				{dataLoading && (
+					<Space size="medium">
+						<Spin size="medium" />
+					</Space>
+				)}
+				</BodyWrapper>
 			</AddProjectWrapper>
 		</>
 	)

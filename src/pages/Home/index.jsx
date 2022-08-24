@@ -1,17 +1,8 @@
 import React, { useState, useEffect, useRef } from "react"
 import { Table, Popconfirm, Form, Typography, Tooltip, Row, Col, Input } from "antd"
 import EditableCell from "components/utility/EditableCell"
-import {
-	GetAllProjects,
-	EditAProject,
-	DeleteAProject,
-	SearchProject,
-	CopyProject,
-} from "redux/app/actions/projects"
-import { useSelector, useDispatch } from "react-redux"
 import Pencil from "assets/icons/Pencil"
 import { HomeWrapper, ActionButtonWrapper, SearchInput, ProjectStatus } from "./styles"
-import { data, loading, searchQuery, setSearchQuery } from "redux/app"
 import { Link, useLocation } from "react-router-dom"
 import Trash from "assets/icons/Trash"
 import Archive from "assets/icons/Archive"
@@ -19,13 +10,13 @@ import moment from "moment"
 import Logout from "components/shared/Logout"
 import { TopHeaderLeftSide } from "pages/AddProject/styles"
 import Duplicate from "assets/icons/Duplicate"
+import { notification } from "antd"
+import { generateId } from "services/CommonMethods"
 
 const EditableTable = () => {
-	const dispatch = useDispatch()
-	const tableData = useSelector(data)
-	const dataLoading = useSelector(loading)
+	const [tableData, setTableData] = React.useState([])
+	const [dataLoading, setLoading] = React.useState(false)
 	const [search, setSearch] = useState("")
-	const searchString = useSelector(searchQuery)
 	const [form] = Form.useForm()
 	const [editingKey, setEditingKey] = useState("")
 	const [filteredProjects, setFilteredProjects] = useState([])
@@ -38,25 +29,25 @@ const EditableTable = () => {
 	const { pathname } = useLocation()
 
 	useEffect(() => {
-		dispatch(GetAllProjects())
-	}, [dispatch])
+		GetAllProjects()
+	}, [])
 
 	useEffect(() => {
-		if (searchString === "") dispatch(GetAllProjects())
-	}, [dispatch, searchString])
+		if (search === "") GetAllProjects()
+	}, [search])
 
 	useEffect(() => {
 		if (tableData?.length > 0) {
-			if (searchString) {
+			if (search) {
 				let result = tableData?.filter(
 					(project) =>
-						project?.name?.toUpperCase().includes(searchString.toUpperCase()) ||
-						project?.description?.toUpperCase().includes(searchString.toUpperCase())
+						project?.name?.toUpperCase().includes(search.toUpperCase()) ||
+						project?.description?.toUpperCase().includes(search.toUpperCase())
 				)
 				setFilteredProjects(result)
 			}
 		}
-	}, [searchString, tableData])
+	}, [search, tableData])
 
 	useEffect(() => {
 		if (tableData.length > 0 && isCopiedSuccess) {
@@ -64,6 +55,13 @@ const EditableTable = () => {
 			edit(latestProject)
 		}
 	}, [tableData])
+
+	function GetAllProjects() {
+		setLoading(true);
+		const projects = JSON.parse(localStorage.getItem('projects'));
+		setTableData(projects)
+		setLoading(false)
+	}
 
 	const edit = (record) => {
 		form.setFieldsValue({
@@ -80,21 +78,66 @@ const EditableTable = () => {
 	}
 
 	const deleteProject = (id) => {
-		dispatch(DeleteAProject(id))
+		setLoading(true)
+		const projects = JSON.parse(localStorage.getItem('projects'));
+		const filteredProject = projects.filter(i => i.id !== id);
+		localStorage.setItem('projects', JSON.stringify(filteredProject))
+		GetAllProjects();
+		notification["success"]({
+			message: "Project deleted successfully",
+			duration: 2,
+		})
 	}
 
 	const save = async (id) => {
 		setIsCopiedSuccess(false)
 		try {
 			const data = await form.validateFields()
-			// console.log(data)
-			dispatch(EditAProject(data, id, "Home"))
+			editAProject(id, data)
 			setEditingKey("")
 		} catch (errInfo) {
 			console.log("Validate Failed:", errInfo)
 		}
 	}
 
+	const editAProject = (id, data) => {
+		setLoading(true);
+		const projects = JSON.parse(localStorage.getItem('projects'));
+		const project = projects.find(i => i.id === id);
+
+		if (!project) {
+			notification["error"]({
+				message: "Project Not Found",
+				duration: 2,
+			})
+			setLoading(false)
+		} else {
+			const index = projects.findIndex(i => i.id === id);
+			projects[index] = { ...project, ...data }
+			localStorage.setItem('projects', JSON.stringify(projects))
+				notification["success"]({
+					message: "Project edited successfully",
+					duration: 2,
+				})
+			GetAllProjects()
+		}
+	}
+
+	function CopyProject(projectID, setPagination, setIsCopiedSuccess) {
+		setLoading(true)
+		const projects = JSON.parse(localStorage.getItem('projects'));
+		const project = projects.find(i => i.id === projectID);
+		projects.push({ ...project, id: generateId(projects), name: `${project.name} Copy` })
+		localStorage.setItem('projects', JSON.stringify(projects))
+		GetAllProjects()
+		setPagination({ current: 1 })
+		setIsCopiedSuccess(true)
+		notification["success"]({
+			message: "Project copied successfully",
+			duration: 2,
+		})
+	}
+	
 	// Show full text in tooltip
 	const handleShowFullText = (text) => {
 		if (text?.length > 70) {
@@ -116,7 +159,7 @@ const EditableTable = () => {
 
 	const handleCopyProject = (projectID) => {
 		setIsCopiedSuccess(false)
-		dispatch(CopyProject(projectID, setPagination, setIsCopiedSuccess))
+		CopyProject(projectID, setPagination, setIsCopiedSuccess)
 	}
 
 	const columns = [
@@ -200,18 +243,15 @@ const EditableTable = () => {
 
 						<Typography.Link
 							onClick={() =>
-								dispatch(
-									EditAProject(
+									editAProject(
+										project.id,
 										{
-											name: project.name,
 											status:
 												project?.status?.toLowerCase() === "active"
 													? "Archived"
 													: "Active",
 										},
-										project.id
 									)
-								)
 							}
 						>
 							<Tooltip
@@ -256,7 +296,11 @@ const EditableTable = () => {
 
 	const handleKeyPress = (event) => {
 		if (event.key === "Enter") {
-			dispatch(SearchProject(search))
+			setLoading(true)
+			let projects = JSON.parse(localStorage.getItem('projects'));
+			const filteredProject = projects.filter(i => i.name.toLowerCase().includes(search.toLowerCase()) || i.description.toLowerCase().includes(search.toLowerCase()));
+			setLoading(false)
+			setTableData(filteredProject)
 		}
 	}
 
@@ -269,7 +313,6 @@ const EditableTable = () => {
 							<Input
 								onChange={(e) => {
 									console.log(e.target.value)
-									dispatch(setSearchQuery(e.target.value))
 									setSearch(e.target.value)
 								}}
 								onKeyPress={handleKeyPress}
@@ -294,7 +337,7 @@ const EditableTable = () => {
 						},
 					}}
 					dataSource={
-						filteredProjects?.length > 0 && searchString !== ""
+						filteredProjects?.length > 0 && search !== ""
 							? filteredProjects
 							: pathname.slice(1) === "active"
 							? tableData.filter(

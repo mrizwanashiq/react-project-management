@@ -1,23 +1,39 @@
-import { useEffect } from "react"
+import React from "react"
 import { Form, Input, Button, Space, Spin } from "antd"
-import { Card, Wrapper, Heading, FormWrapper, FlexCenter } from "./styles"
-import { RegisterUser } from "redux/app/actions/auth"
-import { useSelector, useDispatch } from "react-redux"
-import { loading } from "redux/app"
-import { useNavigate } from "react-router-dom"
+import { Card, Wrapper, Heading, FormWrapper, FlexCenter, ForgotPassword, ActionLinks } from "./styles"
+import { useNavigate, Link } from "react-router-dom"
 import LogoPrimary from "assets/logos/LogoPrimary"
+import { notification } from "antd"
+import { generateId } from "services/CommonMethods"
 
 const Register = () => {
-	const dispatch = useDispatch()
 	const navigate = useNavigate()
-	const dataLoading = useSelector(loading)
+	const [dataLoading, setLoading] = React.useState(false)
 	const [form] = Form.useForm()
 
 	const onFinish = (values) => {
-		console.log("Success:", values)
-		dispatch(RegisterUser(values, navigate))
+		setLoading(true)
+		const users = JSON.parse(localStorage.getItem('users'));
+		const user = users.find(i => i.email === values.email);
+		if (!user) {
+			values.id = generateId(users);
+			users.push(values);
+			localStorage.setItem('users', JSON.stringify(users))
+			notification["success"]({
+				message: "Registered Successfully",
+				duration: 2,
+			})
+			setLoading(false)
+			navigate("/login")
+		} else {
+			notification["error"]({
+				message: "User already exists with this email",
+				duration: 2,
+			})
+			setLoading(false)
+		}
 	}
-	useEffect(() => {
+	React.useEffect(() => {
 		form.setFieldsValue({
 			first_name: "",
 			last_name: "",
@@ -65,6 +81,13 @@ const Register = () => {
 						>
 							<Input.Password />
 						</Form.Item>
+
+						<ActionLinks>
+							<ForgotPassword>
+								<Link to="/login">Already have an account.</Link>
+							</ForgotPassword>
+							{/* <ForgotPassword>Forgot Password</ForgotPassword> */}
+						</ActionLinks>
 
 						<Form.Item wrapperCol={{ offset: 8, span: 16 }}>
 							<Button type="primary" htmlType="submit">

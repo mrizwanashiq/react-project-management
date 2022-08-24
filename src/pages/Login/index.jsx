@@ -1,23 +1,38 @@
-import { useEffect } from "react"
+import React from "react"
 import { Form, Input, Button, Space, Spin } from "antd"
 import { LoginCard, LoginWrapper, LoginHeading, FormWrapper, FlexCenter } from "./styles"
-import { LoginUser } from "redux/app/actions/auth"
-import { useSelector, useDispatch } from "react-redux"
-import { loading } from "redux/app"
-import { useNavigate } from "react-router-dom"
+import { ForgotPassword, ActionLinks } from "pages/Register/styles"
+import { useNavigate, Link } from "react-router-dom"
 import LogoPrimary from "assets/logos/LogoPrimary"
+import { notification } from "antd"
 
 const Login = () => {
-	const dispatch = useDispatch()
 	const navigate = useNavigate()
-	const dataLoading = useSelector(loading)
+	const [dataLoading, setLoading] = React.useState(false)
 	const [form] = Form.useForm()
 
 	const onFinish = (values) => {
-		console.log("Success:", values)
-		dispatch(LoginUser(values, navigate))
+		setLoading(true);
+		const users = JSON.parse(localStorage.getItem('users'));
+		const user = users.find(i => i.email === values.email && i.password === values.password);
+
+		if (user) {
+			localStorage.setItem("token", user.id)
+			notification["success"]({
+				message: "Logged in",
+				duration: 2,
+			})
+			setLoading(false)
+			navigate("/")
+		} else {
+			notification["error"]({
+				message: "Invalid Credetials",
+				duration: 2,
+			})
+			setLoading(false)
+		}
 	}
-	useEffect(() => {
+	React.useEffect(() => {
 		form.setFieldsValue({
 			email: "",
 			password: "",
@@ -47,6 +62,12 @@ const Login = () => {
 						>
 							<Input.Password />
 						</Form.Item>
+
+						<ActionLinks>
+							<ForgotPassword>
+								<Link to="/register">Create a new account</Link>
+							</ForgotPassword>
+						</ActionLinks>
 
 						<Form.Item wrapperCol={{ offset: 8, span: 16 }}>
 							<Button type="primary" htmlType="submit">

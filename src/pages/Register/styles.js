@@ -60,3 +60,23 @@ export const FlexCenter = styled.div`
 	display: flex;
 	justify-content: center;
 `
+
+export const ForgotPassword = styled.div`
+	margin-top: 12px;
+	font-family: DM Sans;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 13px;
+	line-height: 112.5%;
+	/* identical to box height, or 15px */
+
+	/* Gray 4 */
+
+	color: #bdbdbd;
+`
+
+export const ActionLinks = styled.div`
+	display: flex;
+	flex-basis: 438px;
+	justify-content: start;
+`

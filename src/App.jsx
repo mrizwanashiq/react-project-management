@@ -12,6 +12,16 @@ import Register from "pages/Register"
 import PageNotFound from "components/pages/NotFound/PageNotFound"
 
 function App() {
+	React.useEffect(() => {
+		if (!localStorage.getItem('users')) {
+			localStorage.setItem('users', JSON.stringify([]))
+		}
+
+		if (!localStorage.getItem('projects')) {
+			localStorage.setItem('projects', JSON.stringify([]))
+		}
+
+	}, [])
 	const layoutWrapper = (component) => (
 		<PrivateRoute>
 			<Layout>{component}</Layout>

@@ -95,6 +95,18 @@ export const InputWrapper = styled.div`
 	}
 `
 
+export const Title = styled.div`
+	font-family: Myriad Pro;
+	font-size: 1.125rem;
+	font-weight: 600;
+	display: flex;
+	height: 4rem;
+	padding: 10px;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+`
+
 export const TopHeaderWrapper = styled.div`
 	display: flex;
 	justify-content: space-between;

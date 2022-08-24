@@ -1,20 +1,18 @@
 import React, { useEffect, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { Menu } from "antd"
-import { useDispatch } from "react-redux"
+import { Menu, notification } from "antd"
 import Projects from "assets/icons/Projects"
 import { ButtonWrapper, MenuWrapper } from "./styles"
-import { CreateProject } from "redux/app/actions/projects"
 import CustomButton from "components/shared/CustomButton/CustomButton"
 import PlusIcon from "assets/icons/PlusIcon.png"
 import Active from "assets/icons/Active"
 import Archive from "assets/icons/Archive"
+import { generateId } from "services/CommonMethods"
 
 const NavMenu = ({ collapsed }) => {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { pathname } = location
-	const dispatch = useDispatch()
 	const [currentActive, setCurrentActive] = useState(pathname)
 
 	useEffect(() => {
@@ -23,6 +21,25 @@ const NavMenu = ({ collapsed }) => {
 
 	const handleClick = (e) => {
 		setCurrentActive(e.key)
+	}
+
+	const createProject = () => {
+		const projects = JSON.parse(localStorage.getItem('projects'));
+		const project = {
+			id: generateId(projects),
+			name: `Untitled Project ${generateId(projects)}`,
+			description: '',
+			user_id: localStorage.getItem('token'),
+			last_modified_by: localStorage.getItem('token'),
+			status: 'active'
+		}
+		projects.push(project);
+		localStorage.setItem('projects', JSON.stringify(projects))
+		notification["success"]({
+			message: "Project created successfully",
+			duration: 2,
+		})
+		navigate(`/project/${project.id}`, { state: { isNewProject: true } })
 	}
 
 	return (
@@ -54,7 +71,7 @@ const NavMenu = ({ collapsed }) => {
 
 						<ButtonWrapper>
 							<CustomButton
-								onClick={() => dispatch(CreateProject(navigate))}
+								onClick={() => createProject()}
 								image={PlusIcon}
 								title={!collapsed ? "New Project" : ""}
 								collapsed={collapsed}
