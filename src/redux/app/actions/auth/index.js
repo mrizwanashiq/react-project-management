@@ -1,70 +1,71 @@
 import { notification } from "antd"
 import { requestCompleted, requestFailure, requestStart } from "redux/app"
+import axios from "axios"
 
 // Login User
-export function LoginUser(payload, navigate) {
+export function LoginUser(data, navigate) {
 	return async (dispatch) => {
 		dispatch(requestStart())
-		let users = localStorage.getItem('users');
-		if (users) {
-			users = JSON.parse(users);
-			const user = users.find(i => i.email === payload.email && i.password === payload.password);
-
-			if (user) {
-				localStorage.setItem("token", user.id)
-				notification["success"]({
-					message: "Logged in",
-					duration: 2,
+		try {
+			axios
+				.post(process.env.REACT_APP_API_BASE_URL + "/user/login", data)
+				.then(res => {
+					if (res.status === 200) {
+						const { data } = res.data
+						localStorage.setItem("token", data.token)
+						notification["success"]({
+							message: "Logged in",
+							duration: 2,
+						})
+						navigate("/")
+						dispatch(requestCompleted())
+					}
 				})
-				navigate("/")
-				dispatch(requestCompleted())
-			} else {
-				notification["error"]({
-					message: "Invalid Credetials",
-					duration: 2,
+				.catch(error => {
+					// notification["error"]({
+					// 	message: error.response.data.data,
+					// })
+					// dispatch(requestCompleted())
+					notification["error"]({
+						message: "Invalid Credetials",
+						duration: 2,
+					})
+					dispatch(requestCompleted())
 				})
-				dispatch(requestCompleted())
-			}
-
-		} else {
-			notification["error"]({
-				message: "No User found, register yourself",
-				duration: 2,
-			})
-			dispatch(requestFailure())
+		} catch (error) {
+			throw error
 		}
 	}
 }
 
-export function RegisterUser(payload, navigate) {
+export function RegisterUser(data, navigate) {
 	return async (dispatch) => {
 		dispatch(requestStart())
-		let users = localStorage.getItem('users');
-		if (users) {
-			users = JSON.parse(users);
-		} else {
-			localStorage.setItem('users', JSON.stringify([]))
-			users = [];
+		try {
+			axios
+				.post(process.env.REACT_APP_API_BASE_URL + "/user/registration", data)
+				.then(res => {
+					if (res) {
+						dispatch(requestCompleted())
+						navigate("/login")
+						notification["success"]({
+							message: "Registered successfully",
+						})
+					}
+				})
+				.catch(error => {
+					// notification["error"]({
+					// 	message: error.response.data.data,
+					// })
+					// dispatch(requestCompleted())
+					notification["error"]({
+						message: "User already exists with this email",
+						duration: 2,
+					})
+					dispatch(requestCompleted())
+				})
+		} catch (error) {
+			// dispatch(loadUserProfileFailure())
 		}
-		const user = users.find(i => i.email === payload.email);
-
-		if (!user) {
-			payload.id = users.length + 1;
-			users.push(payload);
-			localStorage.setItem('users', JSON.stringify(users))
-			notification["success"]({
-				message: "Registered Successfully",
-				duration: 2,
-			})
-			navigate("/")
-			dispatch(requestCompleted())
-		} else {
-			notification["error"]({
-				message: "User already exists with this email",
-				duration: 2,
-			})
-			dispatch(requestCompleted())
-		}
-
 	}
 }
