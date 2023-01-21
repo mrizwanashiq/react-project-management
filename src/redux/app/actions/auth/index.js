@@ -9,7 +9,7 @@ export function LoginUser(data, navigate) {
 		try {
 			axios
 				.post(process.env.REACT_APP_API_BASE_URL + "/user/login", data)
-				.then(res => {
+				.then((res) => {
 					if (res.status === 200) {
 						const { data } = res.data
 						localStorage.setItem("token", data.token)
@@ -21,11 +21,7 @@ export function LoginUser(data, navigate) {
 						dispatch(requestCompleted())
 					}
 				})
-				.catch(error => {
-					// notification["error"]({
-					// 	message: error.response.data.data,
-					// })
-					// dispatch(requestCompleted())
+				.catch((error) => {
 					notification["error"]({
 						message: "Invalid Credetials",
 						duration: 2,
@@ -44,7 +40,7 @@ export function RegisterUser(data, navigate) {
 		try {
 			axios
 				.post(process.env.REACT_APP_API_BASE_URL + "/user/registration", data)
-				.then(res => {
+				.then((res) => {
 					if (res) {
 						dispatch(requestCompleted())
 						navigate("/login")
@@ -53,11 +49,7 @@ export function RegisterUser(data, navigate) {
 						})
 					}
 				})
-				.catch(error => {
-					// notification["error"]({
-					// 	message: error.response.data.data,
-					// })
-					// dispatch(requestCompleted())
+				.catch((error) => {
 					notification["error"]({
 						message: "User already exists with this email",
 						duration: 2,
@@ -65,7 +57,11 @@ export function RegisterUser(data, navigate) {
 					dispatch(requestCompleted())
 				})
 		} catch (error) {
-			// dispatch(loadUserProfileFailure())
+			notification["error"]({
+				message: "Error",
+				duration: 2,
+			})
+			dispatch(loadUserProfileFailure())
 		}
 	}
 }

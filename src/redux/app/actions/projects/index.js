@@ -3,20 +3,18 @@ import { generateId } from "services/CommonMethods"
 import { requestStart, requestSuccess, requestFailure, requestCompleted } from "../../"
 
 const token = localStorage.getItem("token")
-// Get Ideas, Criteria and Category Groups
-export function GetProjectMeta(
-	id,
-) {
+
+export function GetProjectMeta(id) {
 	return (dispatch) => {
 		dispatch(requestStart())
-		let projects = localStorage.getItem('projects');
+		let projects = localStorage.getItem("projects")
 		if (projects) {
-			projects = JSON.parse(projects);
+			projects = JSON.parse(projects)
 		} else {
-			localStorage.setItem('users', JSON.stringify([]))
-			projects = [];
+			localStorage.setItem("users", JSON.stringify([]))
+			projects = []
 		}
-		const project = projects.find(i => i.id === id);
+		const project = projects.find((i) => i.id === id)
 
 		if (!project) {
 			dispatch(requestFailure())
@@ -24,7 +22,6 @@ export function GetProjectMeta(
 			dispatch(requestSuccess(project))
 			dispatch(requestCompleted())
 		}
-
 	}
 }
 
@@ -32,12 +29,12 @@ export function GetProjectMeta(
 export function GetAllProjects() {
 	return (dispatch) => {
 		dispatch(requestStart())
-		let projects = localStorage.getItem('projects');
+		let projects = localStorage.getItem("projects")
 		if (projects) {
-			projects = JSON.parse(projects);
+			projects = JSON.parse(projects)
 			dispatch(requestSuccess(projects))
 		} else {
-			localStorage.setItem('projects', JSON.stringify([]))
+			localStorage.setItem("projects", JSON.stringify([]))
 			dispatch(requestSuccess([]))
 		}
 	}
@@ -47,14 +44,14 @@ export function GetAllProjects() {
 export function EditAProject(data, id, screen) {
 	return (dispatch, state) => {
 		dispatch(requestStart())
-		let projects = localStorage.getItem('projects');
+		let projects = localStorage.getItem("projects")
 		if (projects) {
-			projects = JSON.parse(projects);
+			projects = JSON.parse(projects)
 		} else {
-			localStorage.setItem('users', JSON.stringify([]))
-			projects = [];
+			localStorage.setItem("users", JSON.stringify([]))
+			projects = []
 		}
-		const project = projects.find(i => i.id === id);
+		const project = projects.find((i) => i.id === id)
 
 		if (!project) {
 			notification["error"]({
@@ -63,9 +60,9 @@ export function EditAProject(data, id, screen) {
 			})
 			dispatch(requestFailure())
 		} else {
-			const index = projects.findIndex(i => i.id === id);
+			const index = projects.findIndex((i) => i.id === id)
 			projects[index] = { ...project, ...data }
-			localStorage.setItem('projects', JSON.stringify(projects))
+			localStorage.setItem("projects", JSON.stringify(projects))
 
 			const { app } = state()
 			const projectName = app?.data[0]?.project?.name
@@ -82,9 +79,7 @@ export function EditAProject(data, id, screen) {
 			} else {
 				dispatch(GetAllProjects())
 			}
-
 		}
-
 	}
 }
 
@@ -92,14 +87,18 @@ export function EditAProject(data, id, screen) {
 export function SearchProject(searchQuery) {
 	return (dispatch) => {
 		dispatch(requestStart())
-		let projects = localStorage.getItem('projects');
+		let projects = localStorage.getItem("projects")
 		if (projects) {
-			projects = JSON.parse(projects);
+			projects = JSON.parse(projects)
 		} else {
-			localStorage.setItem('users', JSON.stringify([]))
-			projects = [];
+			localStorage.setItem("users", JSON.stringify([]))
+			projects = []
 		}
-		const filteredProject = projects.filter(i => i.name.toLowerCase().includes(searchQuery.toLowerCase()) || i.description.toLowerCase().includes(searchQuery.toLowerCase()));
+		const filteredProject = projects.filter(
+			(i) =>
+				i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				i.description.toLowerCase().includes(searchQuery.toLowerCase())
+		)
 		dispatch(requestSuccess(filteredProject))
 	}
 }
@@ -108,15 +107,15 @@ export function SearchProject(searchQuery) {
 export function DeleteAProject(id) {
 	return (dispatch) => {
 		dispatch(requestStart())
-		let projects = localStorage.getItem('projects');
+		let projects = localStorage.getItem("projects")
 		if (projects) {
-			projects = JSON.parse(projects);
+			projects = JSON.parse(projects)
 		} else {
-			localStorage.setItem('users', JSON.stringify([]))
-			projects = [];
+			localStorage.setItem("users", JSON.stringify([]))
+			projects = []
 		}
-		const filteredProject = projects.filter(i => i.id === id);
-		localStorage.setItem('projects', JSON.stringify(filteredProject))
+		const filteredProject = projects.filter((i) => i.id === id)
+		localStorage.setItem("projects", JSON.stringify(filteredProject))
 		dispatch(requestCompleted())
 		dispatch(GetAllProjects())
 		notification["success"]({
@@ -130,23 +129,23 @@ export function DeleteAProject(id) {
 export function CreateProject(navigate) {
 	return (dispatch) => {
 		dispatch(requestStart())
-		let projects = localStorage.getItem('projects');
+		let projects = localStorage.getItem("projects")
 		if (projects) {
-			projects = JSON.parse(projects);
+			projects = JSON.parse(projects)
 		} else {
-			projects = [];
-			localStorage.setItem('projects', JSON.stringify([]))
+			projects = []
+			localStorage.setItem("projects", JSON.stringify([]))
 		}
 		const project = {
 			id: generateId(projects),
 			name: `Untitled Project ${generateId(projects)}`,
-			description: '',
+			description: "",
 			user_id: token,
 			last_modified_by: token,
-			status: 'active'
+			status: "active",
 		}
-		projects.push(project);
-		localStorage.setItem('projects', JSON.stringify(projects))
+		projects.push(project)
+		localStorage.setItem("projects", JSON.stringify(projects))
 		notification["success"]({
 			message: "Project created successfully",
 			duration: 2,
@@ -155,43 +154,20 @@ export function CreateProject(navigate) {
 	}
 }
 
-// Get single project details
-export function GetProjectDetails(id) {
-	return (dispatch) => {
-		dispatch(requestStart())
-		let projects = localStorage.getItem('projects');
-		if (projects) {
-			projects = JSON.parse(projects);
-		} else {
-			localStorage.setItem('users', JSON.stringify([]))
-			projects = [];
-		}
-		const project = projects.find(i => i.id === id);
-
-		if (!project) {
-			dispatch(requestFailure())
-		} else {
-			dispatch(requestSuccess(project))
-			dispatch(requestCompleted())
-		}
-
-	}
-}
-
 // Copy a project
 export function CopyProject(projectID, setPagination, setIsCopiedSuccess) {
 	return (dispatch) => {
 		dispatch(requestStart())
-		let projects = localStorage.getItem('projects');
+		let projects = localStorage.getItem("projects")
 		if (projects) {
-			projects = JSON.parse(projects);
+			projects = JSON.parse(projects)
 		} else {
-			localStorage.setItem('users', JSON.stringify([]))
-			projects = [];
+			localStorage.setItem("users", JSON.stringify([]))
+			projects = []
 		}
-		const project = projects.find(i => i.id === projectID);
+		const project = projects.find((i) => i.id === projectID)
 		projects.push({ ...project, id: generateId(projects), name: `${project.name} Copy` })
-		localStorage.setItem('projects', JSON.stringify(projects))
+		localStorage.setItem("projects", JSON.stringify(projects))
 		dispatch(requestCompleted())
 		dispatch(GetAllProjects())
 		setPagination({ current: 1 })
