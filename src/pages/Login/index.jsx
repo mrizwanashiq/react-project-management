@@ -1,10 +1,9 @@
 import React from "react"
-import { Form, Input, Button, Space, Spin } from "antd"
+import { Form, Input, Button, Space, Spin, notification } from "antd"
 import { LoginCard, LoginWrapper, LoginHeading, FormWrapper, FlexCenter } from "./styles"
 import { ForgotPassword, ActionLinks } from "pages/Register/styles"
 import { useNavigate, Link } from "react-router-dom"
 import LogoPrimary from "assets/logos/LogoPrimary"
-import { notification } from "antd"
 
 const Login = () => {
 	const navigate = useNavigate()
